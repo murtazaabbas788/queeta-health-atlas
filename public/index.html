@@ -1,0 +1,664 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+
+  <title>Quetta Health Atlas</title>
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  >
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"
+  >
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- HEADER -->
+
+  <header class="topbar">
+
+    <button
+      id="toggleSide"
+      class="icon-btn"
+      aria-label="Toggle sidebar"
+      aria-expanded="true"
+    >
+      ☰
+    </button>
+
+    <div class="brand">
+
+      <span class="brand-icon" aria-hidden="true">
+        <svg
+          viewBox="0 0 48 48"
+          width="30"
+          height="30"
+          fill="none"
+        >
+          <path
+            d="M24 5C15.7 5 9 11.7 9 20c0 10.5 15 23 15 23s15-12.5 15-23C39 11.7 32.3 5 24 5Z"
+            stroke="currentColor"
+            stroke-width="3"
+            stroke-linejoin="round"
+          />
+
+          <path
+            d="M24 13v14M17 20h14"
+            stroke="currentColor"
+            stroke-width="3"
+            stroke-linecap="round"
+          />
+        </svg>
+      </span>
+
+      <span>
+        <strong>Quetta Health Atlas</strong>
+        <small>Healthcare facilities · Quetta</small>
+      </span>
+
+    </div>
+
+<div class="search-wrap">
+
+  <span class="search-icon">⌕</span>
+
+  <input
+    id="search"
+    type="search"
+    placeholder="Search hospitals, clinics or areas…"
+    autocomplete="off"
+    aria-label="Search facilities"
+  >
+
+  <button
+    id="locate"
+    class="header-near-btn"
+    title="Find facilities near me"
+    type="button"
+  >
+    ◎ Near me
+  </button>
+
+  <div
+    id="searchResults"
+    class="search-results"
+    hidden
+  ></div>
+
+</div>
+
+    <div class="top-actions">
+
+      <span id="apiStatus" class="status">
+        <i></i> Connecting
+      </span>
+
+      <button
+        id="refresh"
+        class="icon-btn"
+        title="Refresh data"
+        aria-label="Refresh data"
+      >
+        ↻
+      </button>
+
+      <button id="manage" class="manage-btn">
+        Admin & editor
+      </button>
+
+      <div class="clock">
+        <b id="clock">--:--</b>
+        <small id="date">Pakistan time</small>
+      </div>
+
+    </div>
+
+  </header>
+
+
+  <!-- MAP AND SIDEBAR -->
+
+  <main id="workspace" class="workspace">
+
+    <div
+      id="map"
+      aria-label="Map of healthcare facilities in Quetta"
+    ></div>
+
+    <aside id="sidebar" class="sidebar">
+
+      <div class="side-head">
+        <span>HEALTHCARE MAP</span>
+        <strong>Explore Quetta</strong>
+        <small>Healthcare facilities · Quetta District</small>
+      </div>
+
+      <div class="metrics">
+
+        <div>
+          <b id="countAll">—</b>
+          <span>Facilities</span>
+        </div>
+
+        <div>
+          <b id="countPublic">—</b>
+          <span>Public</span>
+        </div>
+
+        <div>
+          <b id="countPrivate">—</b>
+          <span>Private</span>
+        </div>
+
+      </div>
+
+      <nav class="tabs" aria-label="Map tools">
+        <button class="active" data-tab="places">Places</button>
+        <button data-tab="layers">Layers</button>
+        <button data-tab="data">Data</button>
+        <button data-tab="sources">Sources</button>
+      </nav>
+
+
+      <!-- PLACES -->
+
+      <section id="pane-places" class="pane">
+
+        <div class="pane-title">
+
+          <span id="resultCount">Loading…</span>
+
+          <div>
+            <button id="near" class="small-btn">Near me</button>
+            <button id="fit" class="small-btn">Fit</button>
+          </div>
+
+        </div>
+
+        <div id="list" class="list"></div>
+
+      </section>
+
+
+      <!-- LAYERS -->
+
+      <section id="pane-layers" class="pane" hidden>
+
+        <h2>Layers & filters</h2>
+
+        <p class="hint">
+          Choose what appears on the map.
+        </p>
+
+        <div id="categoryFilters" class="filter-list">
+
+          <label>
+            <input type="checkbox" value="public" checked>
+            <span class="mini-icon public">✚</span>
+            Public hospitals
+            <b id="nPublic">0</b>
+          </label>
+
+          <label>
+            <input type="checkbox" value="private" checked>
+            <span class="mini-icon private">◆</span>
+            Private hospitals
+            <b id="nPrivate">0</b>
+          </label>
+
+          <label>
+            <input type="checkbox" value="healthcare" checked>
+            <span class="mini-icon healthcare">✣</span>
+            Healthcare facilities
+            <b id="nCare">0</b>
+          </label>
+
+        </div>
+
+        <button id="reset" class="outline">
+          Reset filters
+        </button>
+
+      </section>
+
+
+      <!-- DATA -->
+
+      <section id="pane-data" class="pane" hidden>
+
+        <h2>Data overview</h2>
+
+        <p class="hint">
+          Counts reflect the current database records.
+        </p>
+
+        <div id="dataStats" class="data-stats"></div>
+
+        <h3>Export visible results</h3>
+
+        <div class="button-row">
+
+          <button id="csv" class="outline">
+            Download CSV
+          </button>
+
+          <button id="geojson" class="outline">
+            Download GeoJSON
+          </button>
+
+          <button id="gpkg" class="outline">
+            Download GeoPackage
+          </button>
+
+        </div>
+
+        <p class="hint">
+          Exported results follow your current filters.
+        </p>
+
+      </section>
+
+
+      <!-- SOURCES -->
+
+      <section id="pane-sources" class="pane" hidden>
+
+        <h2>Study area &amp; sources</h2>
+
+        <p>
+          <strong>Study area:</strong>
+          Quetta District, Balochistan, Pakistan. The mapped facilities
+          are concentrated in and around Quetta City. The current
+          49 points were checked against the supplied Quetta City tehsil
+          boundary, whose source and date are being documented.
+        </p>
+
+        <p>
+          <strong>Facilities:</strong>
+          Candidate locations were gathered from OpenStreetMap and
+          from locations supplied by the project author. Selected
+          attributes were checked against available public sources.
+          Individual details and ownership remain under review.
+        </p>
+
+        <p>
+          <strong>Coordinates:</strong>
+          A mapped point indicates an approximate location. Some points
+          were derived from mapped polygons and do not necessarily
+          mark entrances. Directions use the stored point.
+        </p>
+
+        <p>
+          <strong>Coverage:</strong>
+          This is a developing academic dataset, not a complete register
+          or a live account of services. Contact facilities directly
+          to confirm details before travelling.
+        </p>
+
+        <h3>Map data &amp; imagery</h3>
+
+        <p>
+          ©
+          <a
+            href="https://www.openstreetmap.org/copyright"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            OpenStreetMap contributors
+          </a>
+
+          ·
+
+          <a
+            href="https://opentopomap.org"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            OpenTopoMap
+          </a>
+
+          · SRTM · Esri and imagery contributors
+        </p>
+
+      </section>
+
+    </aside>
+
+
+    <!-- SIDEBAR HANDLE -->
+
+    <button
+      id="sideHandle"
+      class="side-handle"
+      aria-label="Toggle sidebar"
+    >
+      ‹
+    </button>
+
+
+    <!-- MAP CONTROLS -->
+
+    <div class="map-controls">
+
+      <button
+        id="mapFit"
+        class="fit-map-btn"
+        title="Fit map to visible facilities"
+        aria-label="Fit map to visible facilities"
+      >
+        ↗
+      </button>
+
+    </div>
+
+
+    <!-- BASEMAP MENU -->
+
+    <details class="basemap-panel">
+
+      <summary>
+        <span class="basemap-icon">▧</span>
+        <span>Basemap</span>
+        <span class="basemap-arrow">⌄</span>
+      </summary>
+
+      <div
+        class="basemap-options"
+        aria-label="Choose basemap"
+      >
+
+        <button
+          class="active"
+          data-base="streets"
+          aria-pressed="true"
+        >
+          Streets
+        </button>
+
+        <button
+          data-base="satellite"
+          aria-pressed="false"
+        >
+          Satellite
+        </button>
+
+        <button
+          data-base="topo"
+          aria-pressed="false"
+        >
+          Terrain
+        </button>
+
+        <button
+          data-base="dark"
+          aria-pressed="false"
+        >
+          Dark
+        </button>
+
+      </div>
+
+    </details>
+
+
+    <!-- LEGEND -->
+
+    <details class="legend" open>
+
+      <summary>
+        Legend
+        <span>⌄</span>
+      </summary>
+
+      <div class="legend-items">
+
+        <div class="legend-item">
+          <span class="legend-marker public">✚</span>
+          Public hospital
+        </div>
+
+        <div class="legend-item">
+          <span class="legend-marker private">◆</span>
+          Private hospital
+        </div>
+
+        <div class="legend-item">
+          <span class="legend-marker healthcare">✣</span>
+          Healthcare facility
+        </div>
+
+      </div>
+
+      <small>
+        Use the Layers tab to filter facilities. Hospitals without a
+        public or private ownership value appear as healthcare
+        facilities until reviewed.
+      </small>
+
+    </details>
+
+  </main>
+
+
+  <!-- FOOTER -->
+
+  <footer>
+
+    <span>
+
+      <a
+        href="https://leafletjs.com/"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Leaflet
+      </a>
+
+      | ©
+
+      <a
+        href="https://www.openstreetmap.org/copyright"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        OpenStreetMap
+      </a>
+
+      contributors
+
+      <span id="baseCredit"></span>
+
+    </span>
+
+    <b>@SheikhMurtazabinAbbas</b>
+
+    <span id="coords">
+      Move over map · Zoom <span id="zoom">—</span>
+    </span>
+
+  </footer>
+
+
+  <!-- ADMIN / EDITOR -->
+
+  <dialog id="accessDialog">
+
+    <div class="dialog-head">
+
+      <div>
+        <span class="eyebrow">DATABASE MANAGEMENT</span>
+        <h2>Admin & editor access</h2>
+      </div>
+
+      <button
+        class="close"
+        data-close="accessDialog"
+        aria-label="Close"
+      >
+        ×
+      </button>
+
+    </div>
+
+    <p class="hint">
+      Browse the map without logging in. Editors and admins can
+      manage database records here.
+    </p>
+
+    <form id="loginForm">
+
+      <label>
+        Access token
+
+        <input
+          id="tokenInput"
+          type="password"
+          autocomplete="off"
+          required
+          placeholder="Enter your access token"
+        >
+      </label>
+
+      <div id="loginError" class="error"></div>
+
+      <button class="primary" type="submit">
+        Sign in
+      </button>
+
+    </form>
+
+    <section id="manager" hidden>
+
+      <p id="roleText" class="role-text"></p>
+
+      <form id="facilityForm">
+
+        <label>
+          Select a facility
+
+          <select id="recordSelect">
+            <option value="">+ New facility</option>
+          </select>
+        </label>
+
+        <div class="form-grid">
+
+          <label>
+            Facility name
+            <input id="facilityName" required maxlength="160">
+          </label>
+
+          <label>
+            Facility type
+
+            <input
+              id="facilityType"
+              required
+              maxlength="100"
+              placeholder="Hospital, clinic, BHU…"
+            >
+          </label>
+
+          <label>
+            Ownership
+
+            <select id="ownership">
+              <option>Unknown</option>
+              <option>Public</option>
+              <option>Private</option>
+              <option>Military</option>
+            </select>
+          </label>
+
+          <label>
+            Address <small>(optional)</small>
+            <input id="address" maxlength="250">
+          </label>
+
+          <label>
+            Latitude
+
+            <input
+              id="lat"
+              type="number"
+              step="any"
+              min="-90"
+              max="90"
+              required
+            >
+          </label>
+
+          <label>
+            Longitude
+
+            <input
+              id="lon"
+              type="number"
+              step="any"
+              min="-180"
+              max="180"
+              required
+            >
+          </label>
+
+        </div>
+
+        <p class="hint">
+          Use decimal degrees. Update categories only when supported
+          by your source.
+        </p>
+
+        <div id="formError" class="error"></div>
+
+        <div class="form-actions">
+
+          <button class="primary" type="submit">
+            Save facility
+          </button>
+
+          <button id="newRecord" class="outline" type="button">
+            Add new
+          </button>
+
+          <button
+            id="deleteRecord"
+            class="danger"
+            type="button"
+            disabled
+          >
+            Delete selected
+          </button>
+
+          <button id="logout" class="outline" type="button">
+            Log out
+          </button>
+
+        </div>
+
+      </form>
+
+    </section>
+
+  </dialog>
+
+  <div id="toast" role="status"></div>
+
+
+  <!-- SCRIPTS -->
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+  <script src="app.js"></script>
+
+</body>
+</html>
