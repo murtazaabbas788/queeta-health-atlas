@@ -193,7 +193,7 @@ Environment variables should be stored in the hosting provider's settings rather
 
 ## Author
 
-**Murtaza bob Abbas**  
+**Murtaza bin Abbas**  
 BS Remote Sensing and GIS  
 COMSATS University Islamabad
 
