@@ -1,0 +1,1 @@
+{"name":"quetta-health-atlas","version":"1.0.0","private":true,"scripts":{"start":"node server/server.js","check":"node --check server/server.js && node --check public/app.js"},"dependencies":{"dotenv":"^16.4.5","express":"^4.19.2","pg":"^8.12.0","sql.js":"^1.13.0"}}
